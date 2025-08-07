@@ -7,6 +7,7 @@ import { CreateReviewDto } from '../src/review/dto/create-review.dto';
 import { Types, disconnect } from 'mongoose';
 import { ReviewDocument } from '../src/review/review.model';
 import { REVIEW_NOT_FOUND } from '../src/review/review-constants';
+import { AuthDto } from '../src/auth/dto/auth.dto';
 
 const productId = new Types.ObjectId().toHexString();
 const testDto: CreateReviewDto = {
@@ -16,9 +17,15 @@ const testDto: CreateReviewDto = {
   rating: 5,
   productId,
 };
+
+const loginDto: AuthDto = {
+  login: 'test@test.ru',
+  password: '1',
+};
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
   let createdId: string;
+  let token: string;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -27,9 +34,15 @@ describe('AppController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
+    const res = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send(loginDto);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    token = res.body.access_token;
   });
 
   test('/review/create (POST) - success', () => {
+
     return request(app.getHttpServer())
       .post('/review/create')
       .send(testDto)
@@ -50,7 +63,7 @@ describe('AppController (e2e)', () => {
       });
   });
 
-  test('/review/byProduct/:productId (GET) - success', async () => {
+  test('/review/byProduct/:productId (GET) - success', () => {
     return request(app.getHttpServer())
       .get('/review/byProduct/' + productId)
       .expect(200)
@@ -59,7 +72,7 @@ describe('AppController (e2e)', () => {
       });
   });
 
-  test('/review/byProduct/:productId (GET) - fail', async () => {
+  test('/review/byProduct/:productId (GET) - fail', () => {
     return request(app.getHttpServer())
       .get('/review/byProduct/' + new Types.ObjectId().toHexString())
       .expect(200)
@@ -71,12 +84,14 @@ describe('AppController (e2e)', () => {
   test('/review/:id (DELETE) - success', () => {
     return request(app.getHttpServer())
       .delete('/review/' + createdId)
+      .set('Authorization', 'Bearer ' + token)
       .expect(200);
   });
 
   test('/review/:id (DELETE) - fail', () => {
     return request(app.getHttpServer())
       .delete('/review/' + new Types.ObjectId().toHexString())
+      .set('Authorization', 'Bearer ' + token)
       .expect(404, {
         statusCode: 404,
         message: REVIEW_NOT_FOUND,
