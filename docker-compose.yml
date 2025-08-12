@@ -1,4 +1,5 @@
 version: '3.9'
+
 services:
   top-api.mongo:
     image: mongo
@@ -8,8 +9,22 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
     ports:
-      - 27017:27017
-
+      - '27017:27017'
     volumes:
       - ./mongo-data:/data/db
     command: --wiredTigerCacheSizeGB 1.5
+
+  top-api:
+    image: top-api:latest
+    container_name: top-api
+    restart: always
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./.env:/opt/app/.env
+    networks:
+      - mongo_network
+
+networks:
+  mongo_network:
+    driver: bridge
