@@ -1,9 +1,8 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { IsNumber, IsString } from 'class-validator';
 
-@Schema()
 export class FindProductDto {
-  @Prop({ required: true })
-  category:string;
-  @Prop({ required: true })
-  limit:number;
+  @IsString()
+  category: string;
+  @IsNumber()
+  limit: number;
 }
