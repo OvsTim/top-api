@@ -9,6 +9,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { getMongoConfig } from './configs/mongo.config';
+import { FilesModule } from './files/files.module';
+import { SitemapModule } from './sitemap/sitemap.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { getMongoConfig } from './configs/mongo.config';
       useFactory: getMongoConfig,
     }),
     UsersModule,
+    FilesModule,
+    SitemapModule,
   ],
   controllers: [AppController],
   providers: [AppService],
