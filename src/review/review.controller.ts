@@ -18,10 +18,14 @@ import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { UserEmail } from '../decorators/user-email.decorator';
 import { IdValidationPipe } from '../pipes/id-validation.pipe';
+import { TelegramService } from '../telegram/telegram.service';
 
 @Controller('review')
 export class ReviewController {
-  constructor(private readonly reviewService: ReviewService) {}
+  constructor(
+    private readonly reviewService: ReviewService,
+    private readonly telegramService: TelegramService,
+  ) {}
 
   @UsePipes(new ValidationPipe())
   @Post('create')
@@ -29,10 +33,21 @@ export class ReviewController {
     const newReview = await this.reviewService.create(dto);
     return newReview;
   }
+  @UsePipes(new ValidationPipe())
+  @Post('notify')
+  async notify(@Body() dto: CreateReviewDto) {
+    const message =
+      `Имя: ${dto.name}\n` +
+      `Заголовок: ${dto.title}\n` +
+      `Описание: ${dto.description}\n` +
+      `Рейтинг: ${dto.rating}\n` +
+      `ИД продукта: ${dto.productId}`;
+    return this.telegramService.sendMessage(message);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async delete(@Param('id',IdValidationPipe) id: string) {
+  async delete(@Param('id', IdValidationPipe) id: string) {
     const deletedDoc = await this.reviewService.delete(id);
     if (!deletedDoc) {
       throw new HttpException(REVIEW_NOT_FOUND, HttpStatus.NOT_FOUND);
@@ -40,7 +55,7 @@ export class ReviewController {
   }
   @Get('byProduct/:productId')
   async get(
-    @Param('productId',IdValidationPipe) productId: Types.ObjectId,
+    @Param('productId', IdValidationPipe) productId: Types.ObjectId,
     @UserEmail() email: string,
   ) {
     return await this.reviewService.findByProductId(productId);
